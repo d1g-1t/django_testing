@@ -43,7 +43,7 @@ class TestContent(TestCase):
                 response = self.client.get(url)
                 note_in_object_list = self.note in response.context[
                     'object_list'
-                    ]
+                ]
                 self.assertEqual(note_in_object_list, note_in_list)
 
     def test_pages_contain_form(self):

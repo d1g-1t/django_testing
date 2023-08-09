@@ -125,5 +125,5 @@ class TestLogic(TestCase):
         response = self.client_author.delete(reverse(
             'notes:delete',
             args=(another_note.slug,)
-            ))
+        ))
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
