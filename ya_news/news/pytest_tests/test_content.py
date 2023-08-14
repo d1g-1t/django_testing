@@ -5,6 +5,8 @@ import pytest
 from django.conf import settings
 from django.urls import reverse
 
+from news.models import News, Comment
+
 
 @pytest.mark.usefixtures('all_news')
 @pytest.mark.django_db
@@ -24,12 +26,9 @@ class TestNews:
         response = client.get(self.HOME_PAGE)
         assert response.status_code == HTTPStatus.OK
         object_list = list(response.context['object_list'])
-        sorted_objects = sorted(
-            object_list,
-            key=lambda x: x.date,
-            reverse=True
-        )
-        assert object_list == sorted_objects
+        sorted_objects_from_db = News.objects.order_by(
+            '-date')[:settings.NEWS_COUNT_ON_HOME_PAGE]
+        assert object_list == list(sorted_objects_from_db)
 
 
 @pytest.mark.usefixtures('news')
@@ -39,12 +38,13 @@ class TestComments:
 
     def test_comments_are_sorted_by_date(self, client, comments, news_pk):
         """Проверям отображение комментариев от новых к старым"""
-        url = reverse(self.NEWS_PAGE_DETAIL, args=news_pk)
+        sorted_comments_from_db = Comment.objects.filter(news=news_pk
+                                                         ).order_by('created')
+        url = reverse(self.NEWS_PAGE_DETAIL, args=[news_pk[0]])
         response = client.get(url)
         assert response.status_code == HTTPStatus.OK
         all_comments = list(response.context['object'].comment_set.all())
-        sorted_comments_by_date = sorted(all_comments, key=lambda x: x.created)
-        assert all_comments == sorted_comments_by_date
+        assert all_comments == list(sorted_comments_from_db)
 
     def test_form_not_available_for_unauthorized_user(self, client, news_pk):
         """Проверяем, что форма комментариев для неавторизированного"""

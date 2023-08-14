@@ -1,11 +1,11 @@
+from datetime import timedelta
+
+import pytest
+
 from django.conf import settings
 from django.utils.timezone import now
 
 from news.models import Comment, News
-
-import pytest
-
-from datetime import timedelta
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import pytest
 from django.urls import reverse
 
 from news.models import Comment
-from news.forms import WARNING, BAD_WORDS
+from news.forms import BAD_WORDS, WARNING
 
 
 @pytest.mark.django_db
@@ -30,7 +30,15 @@ class TestCommentsCreate:
         response = parametrized_client.post(url, data=form_data)
         assert response.status_code == HTTPStatus.FOUND
         count_after_comment = Comment.objects.count()
-        assert (count_before_comment != count_after_comment) == expected_status
+        assert (
+            (count_before_comment + 1) == count_after_comment
+            if expected_status
+            else count_before_comment == count_after_comment
+        )
+        if expected_status:
+            new_comment = Comment.objects.last()
+            for field, value in form_data.items():
+                assert getattr(new_comment, field) == value
 
     def test_bad_words_not_allowed_in_comments(self, author_client, news_pk):
         """Проверяем, что в комментариях нельзя использовать "плохие" слова"""
@@ -79,7 +87,8 @@ class TestCommentsEdit:
         response = author_client.post(url, data=form_data)
         assert response.status_code == HTTPStatus.FOUND
         comment.refresh_from_db()
-        assert comment.text == form_data['text']
+        for field, value in form_data.items():
+            assert getattr(comment, field) == value
 
     def test_another_user_cant_edit_comments(
             self, admin_client, form_data, comment, comment_pk
